@@ -105,6 +105,7 @@ public final class XMLProcessorMain extends Application {
 		
 		//save dir
 		txtSaveDir.setPrefWidth(width-100);
+		txtSaveDir.setText(System.getProperty("user.dir"));
 
 		// the text field holding the file location
 		listView.setPrefHeight(height - 75);
@@ -245,8 +246,7 @@ public final class XMLProcessorMain extends Application {
 							if(!test.isDirectory() || !test.canWrite()){
 								msgBox("ABORTED!\nCannot write to location: "+saveFile);
 								return;
-							}
-								
+							}	
 							
 							saveFile = saveFile + base+"."+DATA_FILE;
 							saveFile = saveFile.replace(" ", "_");
