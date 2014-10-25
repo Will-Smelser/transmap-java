@@ -202,6 +202,7 @@ public final class XMLProcessorMain extends Application {
 			@Override
 			public void handle(ActionEvent evt) {
 				txtArea.setText("Processing...");
+				pbar.setProgress(0);
 				tab2.setDisable(false);
 				selectionModel.select(tab2);
 
@@ -248,7 +249,7 @@ public final class XMLProcessorMain extends Application {
 								return;
 							}	
 							
-							saveFile = saveFile + base+"."+DATA_FILE;
+							saveFile = saveFile+ base+"."+((int)count)+"."+DATA_FILE;
 							saveFile = saveFile.replace(" ", "_");
 							
 							//delete the file if it exists
