@@ -34,20 +34,40 @@ public class Utils {
     	writer.println(line);
     }
     
-    protected static List<File> scanDir(File dir) throws FileSystemLoopException{
-    	return scanDir(dir,0);
+    /**
+     * Get a list of all directories
+     * @param dir
+     * @return
+     * @throws FileSystemLoopException
+     */
+    protected static List<File> scanDir2(File dir) throws FileSystemLoopException{
+    	return scanDir(dir,true,0);
     }
-    private static List<File> scanDir(File dir, int depth) throws FileSystemLoopException{
+    
+    /**
+     * Get a list of all files
+     * @param dir
+     * @return
+     * @throws FileSystemLoopException
+     */
+    protected static List<File> scanDir(File dir) throws FileSystemLoopException{
+    	return scanDir(dir,false,0);
+    }
+    
+    private static List<File> scanDir(File dir, boolean dirList, int depth) throws FileSystemLoopException{
     	List<File> files = new ArrayList<File>();
     	if(!dir.isDirectory()) throw new InvalidParameterException();
     	
     	if(depth > 4) throw new FileSystemLoopException(dir.toString());
     	
+    	if(dirList) files.add(dir);
+    	
     	for(File file : dir.listFiles()){
-    		if(file.isFile()) 
+    		if(file.isFile() && !dirList) 
     			files.add(file);
-    		else if(file.isDirectory())
-    			files.addAll(scanDir(file,depth+1));
+    		else if(file.isDirectory()){
+    			files.addAll(scanDir(file,dirList,depth+1));
+    		}
     	}
     	return files;
     }

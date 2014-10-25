@@ -50,14 +50,17 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
 
+import org.apache.commons.io.FilenameUtils;
+
 public final class XMLProcessorMain extends Application {
 
 	private static final int width = 400;
 	private static final int height = 400;
 
 	private static SingleSelectionModel<Tab> selectionModel = null;
+	
+	private static final String fileSep = System.getProperty("file.separator");
 
-	private static String saveLocation = null;
 	private static final String DATA_FILE = "raw.csv";
 
 	// dialog
@@ -154,11 +157,11 @@ public final class XMLProcessorMain extends Application {
 		openSaveLocButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(final ActionEvent e) {
-				saveLocation = dirSave.showDialog(stage).toString();
-				if (saveLocation == null)
+				File temp = dirSave.showDialog(stage);
+				if (temp == null)
 					return;
-
-				txtSaveDir.setText(saveLocation);
+				
+				txtSaveDir.setText(temp.toString());
 				
 			}
 		});
@@ -175,7 +178,7 @@ public final class XMLProcessorMain extends Application {
 				List<File> list = null;
 
 				try {
-					list = Utils.scanDir(dir);
+					list = Utils.scanDir2(dir);
 				} catch (FileSystemLoopException ex) {
 					String msg = "Directory depth too deep.  Max 4 directories subdirectories.";
 					listView.setItems(FXCollections
@@ -206,53 +209,88 @@ public final class XMLProcessorMain extends Application {
 					public void run() {
 						ObservableList<String> ol = listView.getItems();
 
-						// clear the files first
-						File temp = new File(DATA_FILE);
-						if (temp.exists())
-							temp.delete();
-
-						// setup writers
-						PrintWriter writer = null;
-						// PrintWriter writer2= null;
-						try {
-							String saveFile = (saveLocation==null?"":saveLocation+"/"+DATA_FILE);
-							writer = new PrintWriter(new BufferedWriter(
-									new FileWriter(saveFile, true)));
-							writer.println("FILE,SURVEY_PATH,SURVEY,SECTION_ID,LONGITUDE,LATITUDE");
-						} catch (IOException e1) {
-							msgBox("ERROR: \n" + e1.getMessage());
-							txtArea.setText("EROR:\n" + e1.getMessage());
-							return;
-						}
-
 						Map<String, String> errors = new HashMap<String, String>();
+						int fileCount = 0;
 						double count = 1;
 						double size = ol.size();
-						for (String fname : ol) {
-							File file = new File(fname);
+						
+						//iterate over directories
+						for (String dname : ol) {
+							File dir = new File(dname);
 
-							if (!file.exists()) {
-								errors.put(fname, "File does not exist");
+							if (!dir.exists()) {
+								errors.put(dname, "Directory does not exist");
 								continue;
 							}
 
+							List<File> fileList = null;
 							try {
-								process(file, writer);// ,writer2);
-
-							} catch (Exception e) {
-								errors.put(fname, e.getMessage());
-							} finally {
-								pbar.setProgress(count / size);
-								count++;
+								fileList = Utils.scanDir(dir);
+							} catch (FileSystemLoopException e2) {
+								// TODO Auto-generated catch block
+								msgBox("ABORTED!\nERROR: \n" + e2.getMessage());
+								txtArea.setText("ABORTED!\nERROR:\n" + e2.getMessage());
+								return;
 							}
+								
+							fileCount+=fileList.size();
+							
+							int lastSepIndex = FilenameUtils.indexOfLastSeparator(dname);
+							String base = dname.substring(lastSepIndex+1);
+							String saveLocation = txtSaveDir.getText();
+							String saveFile = (saveLocation.isEmpty()?"":saveLocation+fileSep);
+							
+							//verify we can save to this location
+							File test = new File(saveFile);
+							if(!test.isDirectory() || !test.canWrite()){
+								msgBox("ABORTED!\nCannot write to location: "+saveFile);
+								return;
+							}
+								
+							
+							saveFile = saveFile + base+"."+DATA_FILE;
+							saveFile = saveFile.replace(" ", "_");
+							
+							//delete the file if it exists
+							File temp = new File(saveFile);
+							if (temp.exists())
+								temp.delete();
+							
+							PrintWriter writer = null;
+							try {										
+								writer = new PrintWriter(new BufferedWriter(
+										new FileWriter(saveFile, true)));
+								writer.println("FILE,SURVEY_PATH,SURVEY,SECTION_ID,LONGITUDE,LATITUDE");
+								
+							} catch (IOException e1) {
+								msgBox("ABORTED!\nERROR: \n" + e1.getMessage());
+								txtArea.setText("ABORTED!\nERROR:\n" + e1.getMessage());
+								
+								if(writer != null) writer.close();
+								
+								return;
+							}
+							
+							//process the files
+							for(File f : fileList){
+								try{
+									process(f, writer);
+								} catch (Exception e) {
+									errors.put(f.toString(), e.getMessage());
+								} 
+							}
+							
+							writer.close();
+							
+							pbar.setProgress(count / size);
+							count++;
+							
 						}
-
-						writer.close();
 
 						// print errors
 						if (errors.size() == 0) {
 							txtArea.setText("Complete with no Errors.  Processed "
-									+ ol.size()
+									+ fileCount
 									+ " files.\nSee "
 									+ DATA_FILE
 									+ " for results");
@@ -260,7 +298,7 @@ public final class XMLProcessorMain extends Application {
 							StringBuilder msg = new StringBuilder();
 							msg.append("Complete with errors\nError Count: "
 									+ errors.size() + "\n");
-							msg.append("See " + DATA_FILE + " for results\n");
+							//msg.append("See " + DATA_FILE + " for results\n");
 							for (Entry<String, String> info : errors.entrySet())
 								msg.append(info.getKey() + " - "
 										+ info.getValue() + "\n");
