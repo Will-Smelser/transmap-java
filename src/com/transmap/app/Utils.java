@@ -42,6 +42,11 @@ public class Utils {
     	line.append(",").append(gps.get(Survey.LON));
     	line.append(",").append(gps.get(Survey.LAT));
     	
+    	if(rough == null || rough.size() == 0){
+    		writer.println(line);
+    		return;
+    	}
+    	
     	RoughnessBean left  = rough.get(0);
     	RoughnessBean right = rough.get(1);
     	

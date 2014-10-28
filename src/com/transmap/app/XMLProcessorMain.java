@@ -28,6 +28,9 @@ import javafx.geometry.Side;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBuilder;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.LabelBuilder;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SingleSelectionModel;
@@ -81,6 +84,7 @@ public final class XMLProcessorMain extends Application {
 	private static final Button processBtn = ButtonBuilder.create()
 			.text("Process Files").id("button1").build();
 	private static final Button openSaveLocButton = new Button("Save Directory");
+	private static final CheckBox iriMath = new CheckBox("Calculate IRI");
 
 	// pane
 	private static final BorderPane borderPane = new BorderPane();
@@ -91,6 +95,9 @@ public final class XMLProcessorMain extends Application {
 	private static final GridPane processPane = new GridPane();
 	private static final GridPane filePane = new GridPane();
 	private static final GridPane configPane = new GridPane();
+	
+	//label
+    private static final Label configLabel = LabelBuilder.create().text("Config Options").id("configLabel").build();
 
 	static {
 		// progress bar
@@ -137,6 +144,9 @@ public final class XMLProcessorMain extends Application {
 		configPane.setPadding(new Insets(5));
 		configPane.setHgap(2);
 		configPane.setVgap(2);
+		
+		iriMath.setId("configMath");
+		iriMath.setSelected(true);
 
 	}
 
@@ -249,7 +259,7 @@ public final class XMLProcessorMain extends Application {
 								return;
 							}	
 							
-							saveFile = saveFile+ base+"."+((int)count)+"."+DATA_FILE;
+							saveFile = saveFile+ base+"-"+((int)count)+"-"+DATA_FILE;
 							saveFile = saveFile.replace(" ", "_");
 							
 							//delete the file if it exists
@@ -266,7 +276,13 @@ public final class XMLProcessorMain extends Application {
 							try {										
 								writer = new PrintWriter(new BufferedWriter(
 										new FileWriter(saveFile, true)));
-								writer.println(Utils.HEADER+Utils.HEADER_EXT);
+								
+								writer.print(Utils.HEADER);
+								
+								if(iriMath.isSelected())
+									writer.println(Utils.HEADER_EXT);
+								
+								writer.print("\n");
 								
 							} catch (IOException e1) {
 								msgBox("ABORTED!\nERROR: \n" + e1.getMessage());
@@ -330,6 +346,11 @@ public final class XMLProcessorMain extends Application {
 
 		GridPane.setConstraints(openSaveLocButton, 0,0);
 		GridPane.setConstraints(txtSaveDir,1,0);
+		GridPane.setConstraints(configLabel,0,3);
+		GridPane.setConstraints(iriMath,0,4);
+		
+		GridPane.setColumnSpan(configLabel,2);
+		GridPane.setColumnSpan(iriMath,2);
 		
 		GridPane.setConstraints(pbar, 0, 0);
 		GridPane.setConstraints(txtArea, 0, 1);
@@ -349,6 +370,8 @@ public final class XMLProcessorMain extends Application {
 		
 		configPane.getChildren().add(openSaveLocButton);
 		configPane.getChildren().add(txtSaveDir);
+		configPane.getChildren().add(iriMath);
+		configPane.getChildren().add(configLabel);
 
 		processPane.getChildren().add(pbar);
 		processPane.getChildren().add(txtArea);
@@ -358,7 +381,7 @@ public final class XMLProcessorMain extends Application {
 		rootGroup.setPadding(new Insets(12, 12, 12, 12));
 
 		Scene scene = new Scene(rootGroup);
-		// scene.getStylesheets().add("style.css");
+		scene.getStylesheets().add("style.css");
 
 		stage.setScene(scene);
 		stage.show();
@@ -397,6 +420,7 @@ public final class XMLProcessorMain extends Application {
 		Map<String, String> info = null;
 		List<Map<String, String>> gps = new ArrayList<Map<String, String>>();
 		List<RoughnessBean> roughness = null;
+		boolean iriMathVal = iriMath.isSelected();
 
 		XMLInputFactory inputFactory = XMLInputFactory.newInstance();
 		// Setup a new eventReader
@@ -413,7 +437,7 @@ public final class XMLProcessorMain extends Application {
 					gps.add(Survey.processGPSCoordinate(eventReader));
 				} else if (Utils.isEqual(Survey.SURVEYPATH, event)) {
 					surveyPath = eventReader.getElementText();
-				} else if (Utils.isEqual(Survey.ROUGHNESSINFO, event)){
+				} else if (iriMathVal && Utils.isEqual(Survey.ROUGHNESSINFO, event)){
 					roughness = Survey.processRoughnessInfo(eventReader);
 				}
 			}
@@ -426,9 +450,9 @@ public final class XMLProcessorMain extends Application {
 		if (!temp.containsKey(Survey.LON) || !temp.containsKey(Survey.LAT))
 			throw new IOException("No Longitude or Latitude");
 
-		if(roughness == null)
+		if(iriMathVal && roughness == null)
 			throw new IOException("No Roughness found");
-		if(roughness.size() != 2)
+		if(iriMathVal && roughness.size() != 2)
 			throw new IOException("Expected Roughness count of 2, but had "+roughness.size());
 		
 		// save the data

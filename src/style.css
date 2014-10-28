@@ -1,3 +1,15 @@
-.table-row-cell {
-    -fx-cell-size: 70px;
+
+
+#configLabel .text{
+    -fx-effect: dropshadow(one-pass-box , white, 0, 1 , 0, 1);
+}
+#configLabel {
+    -fx-padding: 30px 0px 6px 0px;
+    -fx-font-size: 1.2em;
+    -fx-border-width: 0 0 2 0;
+	-fx-border-color: black;
+	-fx-border-style: dotted;
+}
+#configMath {
+	-fx-padding: 6px;
 }
