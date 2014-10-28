@@ -280,7 +280,7 @@ public final class XMLProcessorMain extends Application {
 								writer.print(Utils.HEADER);
 								
 								if(iriMath.isSelected())
-									writer.println(Utils.HEADER_EXT);
+									writer.print(Utils.HEADER_EXT);
 								
 								writer.print("\n");
 								
