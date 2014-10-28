@@ -254,14 +254,19 @@ public final class XMLProcessorMain extends Application {
 							
 							//delete the file if it exists
 							File temp = new File(saveFile);
-							if (temp.exists())
+							if (temp.exists()){
+								if(!temp.canWrite()){
+									msgBox("ABORTED!\nCannot write to file: "+temp.toString());
+									return;
+								}
 								temp.delete();
+							}
 							
 							PrintWriter writer = null;
 							try {										
 								writer = new PrintWriter(new BufferedWriter(
 										new FileWriter(saveFile, true)));
-								writer.println("FILE,SURVEY_PATH,SURVEY,SECTION_ID,LONGITUDE,LATITUDE");
+								writer.println(Utils.HEADER+Utils.HEADER_EXT);
 								
 							} catch (IOException e1) {
 								msgBox("ABORTED!\nERROR: \n" + e1.getMessage());
@@ -391,6 +396,7 @@ public final class XMLProcessorMain extends Application {
 		String surveyPath = "?";
 		Map<String, String> info = null;
 		List<Map<String, String>> gps = new ArrayList<Map<String, String>>();
+		List<RoughnessBean> roughness = null;
 
 		XMLInputFactory inputFactory = XMLInputFactory.newInstance();
 		// Setup a new eventReader
@@ -407,6 +413,8 @@ public final class XMLProcessorMain extends Application {
 					gps.add(Survey.processGPSCoordinate(eventReader));
 				} else if (Utils.isEqual(Survey.SURVEYPATH, event)) {
 					surveyPath = eventReader.getElementText();
+				} else if (Utils.isEqual(Survey.ROUGHNESSINFO, event)){
+					roughness = Survey.processRoughnessInfo(eventReader);
 				}
 			}
 		}
@@ -418,8 +426,13 @@ public final class XMLProcessorMain extends Application {
 		if (!temp.containsKey(Survey.LON) || !temp.containsKey(Survey.LAT))
 			throw new IOException("No Longitude or Latitude");
 
+		if(roughness == null)
+			throw new IOException("No Roughness found");
+		if(roughness.size() != 2)
+			throw new IOException("Expected Roughness count of 2, but had "+roughness.size());
+		
 		// save the data
-		Utils.saveData(writer, fileName, surveyPath, info, temp);
+		Utils.saveData(writer, fileName, surveyPath, info, temp, roughness);
 	}
 
 }
