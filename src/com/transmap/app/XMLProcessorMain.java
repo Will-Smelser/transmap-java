@@ -280,7 +280,7 @@ public final class XMLProcessorMain extends Application {
 								writer.print(Utils.HEADER);
 								
 								if(iriMath.isSelected())
-									writer.print(Utils.HEADER_EXT);
+									writer.print(Utils.HEADER_EXT+Utils.HEADER_EXT2);
 								
 								writer.print("\n");
 								
@@ -420,6 +420,7 @@ public final class XMLProcessorMain extends Application {
 		Map<String, String> info = null;
 		List<Map<String, String>> gps = new ArrayList<Map<String, String>>();
 		List<RoughnessBean> roughness = null;
+		RutBean[] rutData = null;
 		boolean iriMathVal = iriMath.isSelected();
 
 		XMLInputFactory inputFactory = XMLInputFactory.newInstance();
@@ -439,6 +440,8 @@ public final class XMLProcessorMain extends Application {
 					surveyPath = eventReader.getElementText();
 				} else if (iriMathVal && Utils.isEqual(Survey.ROUGHNESSINFO, event)){
 					roughness = Survey.processRoughnessInfo(eventReader);
+				} else if(Utils.isEqual(Survey.RUTINFO, event)){
+					rutData = Survey.processRutMeasurement(eventReader);
 				}
 			}
 		}
@@ -452,11 +455,15 @@ public final class XMLProcessorMain extends Application {
 
 		if(iriMathVal && roughness == null)
 			throw new IOException("No Roughness found");
+		
 		if(iriMathVal && roughness.size() != 2)
 			throw new IOException("Expected Roughness count of 2, but had "+roughness.size());
 		
+		if(rutData == null)
+			throw new IOException("Expected Rut data, but none found");
+		
 		// save the data
-		Utils.saveData(writer, fileName, surveyPath, info, temp, roughness);
+		Utils.saveData(writer, fileName, surveyPath, info, temp, roughness, rutData);
 	}
 
 }

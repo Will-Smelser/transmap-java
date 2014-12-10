@@ -36,7 +36,7 @@ public class RoughnessBean {
 			variance = variance + val * val;
 		}
 		
-		std = Math.sqrt((variance / count));
+		std = Math.sqrt((variance / (count-1)));
 		avg = avgTmp / count;
 		min = minTmp;
 		max = maxTmp;
