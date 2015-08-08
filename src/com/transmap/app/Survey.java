@@ -2,8 +2,10 @@ package com.transmap.app;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
@@ -20,6 +22,10 @@ public class Survey {
     static final String GPSCOORD = "GPSCoordinate";
     static final String ROUGHNESSINFO = "RoughnessInformation";
     static final String RUTINFO = "RutInformation";
+    static final String BEGIN = "TimeBegin_s";
+    static final String END = "TimeEnd_s";
+    static final String PROCESSINFO = "ProcessingInformation";
+    static final String DATEANDTIME = "DateAndTime";
     
     static Map<String,String> processGPSCoordinate(XMLEventReader reader) throws XMLStreamException{
 
@@ -103,6 +109,30 @@ public class Survey {
     		if(event.isStartElement()){
     			String value = reader.getElementText();
     			String name = event.asStartElement().getName().toString();
+    			result.put(name, value);
+    		}
+    	}
+    	return result;
+    }
+    
+    static Map<String,String> processProcessingInfo(XMLEventReader reader) throws XMLStreamException{
+    	//only look at these nodes
+    	Set<String> names = new HashSet();
+    	names.add("DateAndTime");
+    	
+    	Map<String,String>result = new HashMap<String,String>();
+    	while(reader.hasNext()){
+    		XMLEvent event = reader.nextEvent();
+    		if(event.isEndElement() && PROCESSINFO.equals(event.asEndElement().getName().toString())){
+    			break;
+    		}
+    		if(event.isStartElement()){
+    			String name = event.asStartElement().getName().toString();
+    			
+    			if(!names.contains(name)) continue;
+    			
+    			String value = reader.getElementText();
+    			
     			result.put(name, value);
     		}
     	}

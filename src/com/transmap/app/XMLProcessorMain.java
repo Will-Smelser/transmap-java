@@ -418,6 +418,7 @@ public final class XMLProcessorMain extends Application {
 		String fileName = file.getName();
 		String surveyPath = "?";
 		Map<String, String> info = null;
+		Map<String, String> pinfo = null;
 		List<Map<String, String>> gps = new ArrayList<Map<String, String>>();
 		List<RoughnessBean> roughness = null;
 		RutBean[] rutData = null;
@@ -432,7 +433,9 @@ public final class XMLProcessorMain extends Application {
 		while (eventReader.hasNext()) {
 			XMLEvent event = eventReader.nextEvent();
 			if (event.isStartElement()) {
-				if (Utils.isEqual(Survey.ROADSECINFO, event)) {
+				if (Utils.isEqual(Survey.PROCESSINFO, event)){
+					pinfo = Survey.processProcessingInfo(eventReader);
+				} else if (Utils.isEqual(Survey.ROADSECINFO, event)) {
 					info = Survey.processRoadSectionInfo(eventReader);
 				} else if (Utils.isEqual(Survey.GPSCOORD, event)) {
 					gps.add(Survey.processGPSCoordinate(eventReader));
@@ -463,7 +466,7 @@ public final class XMLProcessorMain extends Application {
 			throw new IOException("Expected Rut data, but none found");
 		
 		// save the data
-		Utils.saveData(writer, fileName, surveyPath, info, temp, roughness, rutData);
+		Utils.saveData(writer, fileName, surveyPath, info, pinfo, temp, roughness, rutData);
 	}
 
 }
