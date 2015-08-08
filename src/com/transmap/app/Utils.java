@@ -63,11 +63,15 @@ public class Utils {
 		} catch (ParseException e) {
 			throw new RuntimeException("Failed to parse date ("+dt+")",e);
 		}
-		Date eDate = new Date(sDate.getTime()+(long)duration);
+		
+		Date eDate = new Date(sDate.getTime()+(long)(duration*1000.0));
+		//System.out.println("dur:"+duration+", begin:"+sDate.getTime()+", end:"+eDate.getTime());
+		
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
 		
 		line.append(",").append(duration);
-		line.append(",").append(sDate);
-		line.append(",").append(eDate);
+		line.append(",").append(sdf.format(sDate));
+		line.append(",").append(sdf.format(eDate));
 		
 		
 		line.append(",").append(gps.get(Survey.LON));
