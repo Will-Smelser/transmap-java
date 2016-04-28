@@ -40,7 +40,7 @@ public class Utils {
 		return left.equals(temp.toString());
 	}
 
-	protected static void saveData(PrintWriter writer, String file, String surveyPath, 
+	protected static void saveData(PrintWriter writer, boolean showIri, boolean showRut, String file, String surveyPath, 
 			Map<String, String> info, Map<String, String> pinfo,
 			Map<String, String> gps, List<RoughnessBean> rough, RutBean[] rut)
 			throws IOException {
@@ -76,12 +76,25 @@ public class Utils {
 		
 		line.append(",").append(gps.get(Survey.LON));
 		line.append(",").append(gps.get(Survey.LAT));
-
-		if (rough == null || rough.size() == 0) {
-			writer.println(line);
-			return;
+		
+		if(showIri){
+			addIriInfo(line, rough);
+		}
+		
+		if(showRut){
+			addRutInfo(line, rut);
 		}
 
+		writer.println(line);
+	}
+	
+	private static void addIriInfo(StringBuilder line, List<RoughnessBean> rough){
+		if(rough == null || rough.size() == 0){
+			line.append(",,,,,,,,,,");
+			return;
+		}
+		
+		//rough is not null, so lets add the information
 		RoughnessBean left = rough.get(0);
 		RoughnessBean right = rough.get(1);
 
@@ -96,26 +109,35 @@ public class Utils {
 		line.append(",").append(right.max);
 		line.append(",").append(right.std);
 		line.append(",").append(right.iriRaw.replace(",", ";"));
-
-		RutBean rutLeft = rut[0];
-		RutBean rutRight = rut[1];
-
-		line.append(",").append(rutLeft.getMaxDepth());
-		line.append(",").append(rutRight.getMaxDepth());
-
-		line.append(",").append(rutLeft.getMinDepth());
-		line.append(",").append(rutRight.getMinDepth());
-
-		line.append(",").append(rutLeft.getAvgDepth());
-		line.append(",").append(rutRight.getAvgDepth());
-
-		line.append(",").append(rutLeft.getStdDepth());
-		line.append(",").append(rutRight.getStdDepth());
-
-		line.append(",").append(rutLeft.getAvgWidth());
-		line.append(",").append(rutRight.getAvgWidth());
-
-		writer.println(line);
+	}
+	
+	/**
+	 * Add the rut information to the stringBuilder
+	 * @param line The line to add to.
+	 * @param rut The rut data, or null.
+	 */
+	private static void addRutInfo(StringBuilder line, RutBean[] rut){
+		if(rut != null){
+			RutBean rutLeft = rut[0];
+			RutBean rutRight = rut[1];
+	
+			line.append(",").append(rutLeft.getMaxDepth());
+			line.append(",").append(rutRight.getMaxDepth());
+	
+			line.append(",").append(rutLeft.getMinDepth());
+			line.append(",").append(rutRight.getMinDepth());
+	
+			line.append(",").append(rutLeft.getAvgDepth());
+			line.append(",").append(rutRight.getAvgDepth());
+	
+			line.append(",").append(rutLeft.getStdDepth());
+			line.append(",").append(rutRight.getStdDepth());
+	
+			line.append(",").append(rutLeft.getAvgWidth());
+			line.append(",").append(rutRight.getAvgWidth());
+		}else{
+			line.append(",,,,,,,,,,");
+		}
 	}
 
 	/**

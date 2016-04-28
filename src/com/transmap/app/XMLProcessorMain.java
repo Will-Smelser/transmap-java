@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.FileSystemLoopException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +86,7 @@ public final class XMLProcessorMain extends Application {
 			.text("Process Files").id("button1").build();
 	private static final Button openSaveLocButton = new Button("Save Directory");
 	private static final CheckBox iriMath = new CheckBox("Calculate IRI");
+	private static final CheckBox rutInfo = new CheckBox("Include Rut Data");
 
 	// pane
 	private static final BorderPane borderPane = new BorderPane();
@@ -147,6 +149,9 @@ public final class XMLProcessorMain extends Application {
 		
 		iriMath.setId("configMath");
 		iriMath.setSelected(true);
+		
+		rutInfo.setId("rutData");
+		rutInfo.setSelected(true);
 
 	}
 
@@ -280,7 +285,10 @@ public final class XMLProcessorMain extends Application {
 								writer.print(Utils.HEADER);
 								
 								if(iriMath.isSelected())
-									writer.print(Utils.HEADER_EXT+Utils.HEADER_EXT2);
+									writer.print(Utils.HEADER_EXT);
+								
+								if(rutInfo.isSelected())
+									writer.print(Utils.HEADER_EXT2);
 								
 								writer.print("\n");
 								
@@ -348,9 +356,11 @@ public final class XMLProcessorMain extends Application {
 		GridPane.setConstraints(txtSaveDir,1,0);
 		GridPane.setConstraints(configLabel,0,3);
 		GridPane.setConstraints(iriMath,0,4);
+		GridPane.setConstraints(rutInfo,0,6);
 		
 		GridPane.setColumnSpan(configLabel,2);
 		GridPane.setColumnSpan(iriMath,2);
+		GridPane.setColumnSpan(rutInfo,2);
 		
 		GridPane.setConstraints(pbar, 0, 0);
 		GridPane.setConstraints(txtArea, 0, 1);
@@ -371,6 +381,7 @@ public final class XMLProcessorMain extends Application {
 		configPane.getChildren().add(openSaveLocButton);
 		configPane.getChildren().add(txtSaveDir);
 		configPane.getChildren().add(iriMath);
+		configPane.getChildren().add(rutInfo);
 		configPane.getChildren().add(configLabel);
 
 		processPane.getChildren().add(pbar);
@@ -417,12 +428,13 @@ public final class XMLProcessorMain extends Application {
 			XMLStreamException {
 		String fileName = file.getName();
 		String surveyPath = "?";
-		Map<String, String> info = null;
-		Map<String, String> pinfo = null;
+		Map<String, String> info = Collections.emptyMap();
+		Map<String, String> pinfo = Collections.emptyMap();
 		List<Map<String, String>> gps = new ArrayList<Map<String, String>>();
 		List<RoughnessBean> roughness = null;
 		RutBean[] rutData = null;
 		boolean iriMathVal = iriMath.isSelected();
+		boolean rutDataVal = rutInfo.isSelected();
 
 		XMLInputFactory inputFactory = XMLInputFactory.newInstance();
 		// Setup a new eventReader
@@ -443,19 +455,25 @@ public final class XMLProcessorMain extends Application {
 					surveyPath = eventReader.getElementText();
 				} else if (iriMathVal && Utils.isEqual(Survey.ROUGHNESSINFO, event)){
 					roughness = Survey.processRoughnessInfo(eventReader);
-				} else if(Utils.isEqual(Survey.RUTINFO, event)){
+				} else if(rutDataVal && Utils.isEqual(Survey.RUTINFO, event)){
 					rutData = Survey.processRutMeasurement(eventReader);
 				}
 			}
 		}
 
+		/*
 		if (gps.size() == 0)
 			throw new IOException("No Longitude or Latitude");
+		*/
 
-		Map<String, String> temp = gps.get(0);
-		if (!temp.containsKey(Survey.LON) || !temp.containsKey(Survey.LAT))
-			throw new IOException("No Longitude or Latitude");
+		Map<String, String> temp = null;
+		if(gps != null && gps.size() > 0){
+			temp = gps.get(0);
+			if (!temp.containsKey(Survey.LON) || !temp.containsKey(Survey.LAT))
+				throw new IOException("No Longitude or Latitude");
+		}
 
+		/*
 		if(iriMathVal && roughness == null)
 			throw new IOException("No Roughness found");
 		
@@ -464,9 +482,10 @@ public final class XMLProcessorMain extends Application {
 		
 		if(rutData == null)
 			throw new IOException("Expected Rut data, but none found");
+		*/
 		
 		// save the data
-		Utils.saveData(writer, fileName, surveyPath, info, pinfo, temp, roughness, rutData);
+		Utils.saveData(writer, iriMathVal, rutDataVal, fileName, surveyPath, info, pinfo, temp, roughness, rutData);
 	}
 
 }
